@@ -33,6 +33,7 @@ uvicorn main:app --reload
 ```
 
 Open http://localhost:8000/docs
+Or open http://localhost:8000/ui for the web interface
 
 ## API
 
@@ -40,6 +41,7 @@ Open http://localhost:8000/docs
 |--------|----------|-------------|
 | POST | /upload | Upload PDF invoice |
 | GET | /invoices | List all processed invoices |
+| GET | /ui | Web interface for uploading invoices |
 
 ## Get a free API key
 
