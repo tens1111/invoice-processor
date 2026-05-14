@@ -17,7 +17,7 @@ Processing invoices manually is slow, expensive, and error-prone. This tool auto
 ## Quick Start
 
 ```bash
-git clone https://github.com/your_username/invoice-processor
+git clone https://github.com/tens1111/invoice-processor
 cd invoice-processor
 pip install -r requirements.txt
 ```
