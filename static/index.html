@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Invoice Processor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 24px;
+        }
+
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: #f8f7ff;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        .upload-area label {
+            cursor: pointer;
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #4f46e5;
+        }
+
+        button:disabled {
+            background: #a5b4fc;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 32px;
+            display: none;
+        }
+
+        .result h2 {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .field:last-child {
+            border-bottom: none;
+        }
+
+        .field-name {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .field-value {
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #ef4444;
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6366f1;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .filename {
+            background: #f8f7ff;
+            color: #6366f1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧾 AI Invoice Processor</h1>
+        <p>Upload a PDF invoice and get structured data instantly.</p>
+
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept=".pdf" onchange="onFileSelect(event)">
+            <label>Click to select a PDF invoice</label>
+        </div>
+
+        <div class="filename" id="filename"></div>
+        <div class="error" id="error"></div>
+        <div class="loading" id="loading">⏳ Analyzing invoice...</div>
+
+        <button id="btn" onclick="uploadInvoice()" disabled>Upload & Analyze</button>
+
+        <div class="result" id="result">
+            <h2>📊 Extracted Data</h2>
+            <div id="fields"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        function onFileSelect(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                document.getElementById('filename').style.display = 'block';
+                document.getElementById('filename').textContent = '📄 ' + selectedFile.name;
+                document.getElementById('btn').disabled = false;
+            }
+        }
+
+        async function uploadInvoice() {
+            if (!selectedFile) return;
+
+            document.getElementById('btn').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.error) {
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').textContent = data.error;
+                } else {
+                    const invoice = data.invoice_data;
+                    const labels = {
+                        invoice_number: 'Invoice Number',
+                        invoice_date: 'Invoice Date',
+                        vendor_name: 'Vendor',
+                        client_name: 'Client',
+                        total_amount: 'Total Amount',
+                        currency: 'Currency'
+                    };
+                    let html = '';
+                    for (const [key, label] of Object.entries(labels)) {
+                        const value = invoice[key] || '—';
+                        html += `<div class="field"><span class="field-name">${label}</span><span class="field-value">${value}</span></div>`;
+                    }
+                    document.getElementById('fields').innerHTML = html;
+                    document.getElementById('result').style.display = 'block';
+                }
+            } catch (e) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Something went wrong. Please try again.';
+            }
+
+            document.getElementById('btn').disabled = false;
+        }
+    </script>
+</body>
+
+</html>

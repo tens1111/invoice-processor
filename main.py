@@ -8,6 +8,8 @@ import json
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 load_dotenv()
 
@@ -45,6 +47,13 @@ class InvoiceData(BaseModel):
 
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.get("/ui")
+def ui():
+    return FileResponse("static/index.html")
 
 
 @app.get("/")
